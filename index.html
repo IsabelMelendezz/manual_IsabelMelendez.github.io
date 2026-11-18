@@ -47,11 +47,14 @@
 .day.today .day-number span{color:var(--green);font-weight:700}
 @media(max-width:760px){.weekday,.day-empty{display:none}.day-number span.wd{font-size:0}.day-number span.wd:after{content:attr(data-wd);font-size:10px}.rm-panel{padding:20px 18px 24px}.rm-bell{position:relative;left:auto;top:auto;display:block;width:78px;margin:0 auto 2px;transform:none;animation:none}.rm-x{top:10px;right:10px}.rm-dot.d3{display:none}.toolbar-label{font-size:26px}}
 /* Carrusel de valores y principios */
-.values-marquee{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
-.values-track{display:flex;align-items:center;width:max-content;animation:values-scroll 65s linear infinite}
+.values-marquee{display:block;position:relative;flex:1 1 0%;min-width:0;overflow:hidden}
+.values-marquee:before,.values-marquee:after{content:'';position:absolute;top:0;bottom:0;width:48px;z-index:1;pointer-events:none}
+.values-marquee:before{left:0;background:linear-gradient(90deg,#fff,rgba(255,255,255,0))}
+.values-marquee:after{right:0;background:linear-gradient(270deg,#fff,rgba(255,255,255,0))}
+@media(max-width:1000px){.values-marquee{flex:0 0 100%;width:100%}}
+.values-track{display:flex;align-items:center;width:max-content;will-change:transform;-webkit-backface-visibility:hidden;backface-visibility:hidden}
 .values-track .value-label{flex:none;margin-right:56px;white-space:nowrap}
-@keyframes values-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-@media(prefers-reduced-motion:reduce){.values-marquee{-webkit-mask-image:none;mask-image:none}.values-track{width:auto;flex-wrap:wrap;row-gap:10px}.values-track .is-clone{display:none}}
+@media(prefers-reduced-motion:reduce){.values-marquee:before,.values-marquee:after{display:none}.values-track{width:auto;flex-wrap:wrap;row-gap:10px}.values-track .is-clone{display:none}}
 </style></head>
 <body>
 <header><div class="shell nav"><a class="brand" href="#inicio"><span class="brand-icon"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 28V13M16 21C4 22 4 11 4 11c10-1 12 5 12 10ZM16 15C15 4 27 3 27 3s2 12-11 12Z" stroke="#23775b" stroke-width="2" stroke-linejoin="round"/></svg></span><span>Mi compromiso ético<small>CALENDARIO DE COMPROMISO ÉTICO</small></span></a><nav class="nav-links" aria-label="Navegación principal"><a href="#calendario">Mi calendario</a><a href="#jardin">Mi crecimiento</a><span class="private">◌ Un espacio personal</span></nav></div></header>
@@ -121,6 +124,10 @@ function palette(el,v){el.style.setProperty('--tint',v.tint);el.style.setPropert
 const track=$('values-track');
 for(const v of VALUES){const el=document.createElement('div');el.className='value-label';palette(el,v);el.append(document.createTextNode(v.name));track.append(el);$('note-value').add(new Option(v.name,v.id));}
 [...track.children].forEach(el=>{const copy=el.cloneNode(true);copy.classList.add('is-clone');copy.setAttribute('aria-hidden','true');track.append(copy);});
+(function(){const reduce=window.matchMedia?matchMedia('(prefers-reduced-motion: reduce)'):null;let half=0,pos=0,last=0;
+function measure(){const first=track.children[0],clone=track.children[VALUES.length];half=first&&clone?clone.offsetLeft-first.offsetLeft:0;}
+function tick(t){if(reduce&&reduce.matches){track.style.transform='';last=0;}else{if(!half)measure();if(!last)last=t;const dt=Math.min(t-last,100);last=t;if(half>0){pos=(pos+dt*0.045)%half;track.style.transform='translate3d('+(-pos).toFixed(2)+'px,0,0)';}}requestAnimationFrame(tick);}
+measure();window.addEventListener('resize',measure);window.addEventListener('load',measure);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(measure);requestAnimationFrame(tick);})();
 function monthNotes(day){return state.notes.filter(n=>n.ym===cal.ym&&n.day===day);}
 function renderMonthText(){const mes=MONTHS[cal.month];$('hero-foot').textContent=`${cal.dim} días de posibilidades. Cada pequeño gesto cuenta.`;$('calendar-sub').textContent=`${cal.dim} días para llevar tus valores a la práctica.`;const tl=$('toolbar-label');tl.replaceChildren(document.createTextNode(mes.charAt(0).toUpperCase()+mes.slice(1)+' '));const yr=document.createElement('span');yr.textContent=cal.year;tl.append(yr);$('days').setAttribute('aria-label',`Calendario de ${mes} de ${cal.year}`);}
 function renderPrinciple(){const p=PRINCIPLES[MONTH_PLAN[cal.month]],mes=MONTHS[cal.month];$('rm-title').textContent='Principio de '+mes;$('rm-name').textContent=p.name;$('rm-desc').textContent=p.desc;$('rm-pill-text').textContent='Principio de '+mes+': '+p.name;}
